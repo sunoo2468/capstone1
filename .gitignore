@@ -1,0 +1,15 @@
+# Python virtual environments
+env_test/venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Large files
+*.log
+*.h5
+*.pth
+.DS_Store
