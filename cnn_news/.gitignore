@@ -1,0 +1,17 @@
+# 가상환경
+.venv/
+
+# 캐시/임시 파일
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints
+
+# 데이터
+data/
+*.json
+*.csv
+
+# 로그 및 설정 파일
+*.log
+.env
+.DS_Store

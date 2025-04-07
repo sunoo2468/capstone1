@@ -1,5 +1,6 @@
 # Python virtual environments
 env_test/venv/
+cnn_pipeline/.venv/
 
 # Byte-compiled / cache files
 __pycache__/
@@ -12,4 +13,9 @@ __pycache__/
 *.log
 *.h5
 *.pth
+*.tmp
+*.pickle
+*.pkl
+
+# macOS
 .DS_Store
