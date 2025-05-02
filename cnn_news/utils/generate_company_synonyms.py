@@ -52,4 +52,4 @@ for company in companies:
 # 저장
 syn_df = pd.DataFrame(results)
 syn_df.to_csv(SAVE_PATH, index=False, encoding="utf-8-sig")
-print(f"✅ 저장 완료 → {SAVE_PATH}")
+print(f"저장 완료 → {SAVE_PATH}")
