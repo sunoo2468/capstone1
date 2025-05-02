@@ -1,49 +1,63 @@
-import os
-import json
-import spacy
-from collections import Counter
+# pipeline/03_extract_keywords.py
 
-# ✅ 경로 설정
+import json
+import os
+import sys
+from keybert import KeyBERT
+
+# 경로 설정
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(ROOT_DIR, "data")
+sys.path.append(ROOT_DIR)
 
-INPUT_PATH = os.path.join(DATA_DIR, "cnn_articles_with_sentiment.json")
-OUTPUT_PATH = os.path.join(DATA_DIR, "cnn_keywords_spacy.json")
+INPUT_FILE = os.path.join(DATA_DIR, "cnn_articles_with_sentiment.json")  # 원본
+OUTPUT_FILE = os.path.join(DATA_DIR, "cnn_keywords_bert.json")            # 수정된 파일
 
-# ✅ spaCy 모델 로드 (최초 1회 다운로드 필요: python -m spacy download en_core_web_lg)
-nlp = spacy.load("en_core_web_lg")
+# KeyBERT 모델 로드
+kw_model = KeyBERT(model="all-MiniLM-L6-v2")
 
-def extract_keywords(text, top_k=10):
-    """
-    문장에서 noun chunks 기반 주요 키워드 top_k개 추출
-    """
-    doc = nlp(text)
-    chunks = [chunk.text.lower().strip() for chunk in doc.noun_chunks if len(chunk.text) > 1]
-    counter = Counter(chunks)
-    keywords = [kw for kw, _ in counter.most_common(top_k)]
-    return keywords
+def load_articles(path):
+    with open(path, "r") as f:
+        return json.load(f)
 
-# ✅ 데이터 로드
-with open(INPUT_PATH, "r") as f:
-    data = json.load(f)
+def save_articles(articles, path):
+    with open(path, "w") as f:
+        json.dump(articles, f, indent=2, ensure_ascii=False)
+    print(f"✅ 키워드 저장 완료 → {path}")
 
-results = []
+def extract_keywords_from_articles(articles, top_n=5):
+    updated_articles = []
+    for article in articles:
+        title = article.get("title", "")
+        content = article.get("content", "")
+        sentiment = article.get("sentiment", {})
 
-for article in data:
-    if article["sentiment"]["label"] != "POSITIVE":
-        continue  # 긍정 뉴스만 사용
+        if content.strip():
+            keywords = kw_model.extract_keywords(
+                content,
+                keyphrase_ngram_range=(1, 2),
+                stop_words='english',
+                use_maxsum=True,
+                nr_candidates=20,
+                top_n=top_n
+            )
+            keyword_list = [kw for kw, score in keywords]
+        else:
+            keyword_list = []
 
-    keywords = extract_keywords(article["content"], top_k=10)
+        # content와 url은 아예 제외하고 저장
+        updated_articles.append({
+            "title": title,
+            "sentiment": sentiment,
+            "keywords": keyword_list
+        })
 
-    results.append({
-        "url": article["url"],
-        "title": article["title"],
-        "date": article["date"],
-        "keywords": keywords
-    })
+    return updated_articles
 
-# ✅ 저장
-with open(OUTPUT_PATH, "w") as f:
-    json.dump(results, f, indent=2)
+def main():
+    articles = load_articles(INPUT_FILE)
+    articles_with_keywords = extract_keywords_from_articles(articles)
+    save_articles(articles_with_keywords, OUTPUT_FILE)
 
-print(f"✅ 저장 완료: {OUTPUT_PATH}")
+if __name__ == "__main__":
+    main()
